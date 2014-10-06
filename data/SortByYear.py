@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+
+import sys
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-f')
+args = parser.parse_args()
+
 def SortByYear(filename):
     #import os
     f = dict()    
@@ -12,5 +21,9 @@ def SortByYear(filename):
     # remove the extracted txt file
     # os.remove(filename+'.txt')
     
-def main(filename):
-    SortByYear(filename)
+def main():
+    SortByYear(args.f)
+    
+    
+if __name__ == '__main__':
+  main()
