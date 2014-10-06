@@ -1,0 +1,6 @@
+Hi,
+
+It is a customary to write "Hello world" as the first lines of code in any
+language. So I guess Bash is no exception.
+
+Hello World.
