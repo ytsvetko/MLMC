@@ -8,45 +8,90 @@ import gensim
 import logging
 import argparse
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--corpus")
-parser.add_argument("--output_vectors")
+parser.add_argument("--start")
+parser.add_argument("--end")
 parser.add_argument("--output_model")
 #parser.add_argument("--model")
 args = parser.parse_args()
 
 
+def ParseCorpora(filenames):
+    for filename in filenames:    
+        for line in open(filename):     
+            # tagged case
+            line_split = line.split()
+            if all([len(line_split)==8, line.count('_') == 5, line.count('_.')==0]):
+#                print line            
+                comp_line = [w.split('_') for w in line_split[0:5]]
+                if all([len(c)==2 for c in comp_line]):
+                    [words,pos]= zip(*comp_line)
+                    if all([len(pos)==5, all([p.isupper() for p in pos])]):
+                        sent = list(words) + [line_split[6]]
+              
+            # non-tagged case
+            elif all([len(line_split)==8, line.count('_') == 0]):
+                sent = line_split[0:5] + [line_split[6]]
+                    
+            # Preprocessing: no numbers, special characters etc.
+            if 'sent' in locals() or 'sent' in globals():
+                if all([w.isalpha() for w in sent[0:5]]):
+                    Sent = [w.lower() for w in sent[0:5]]
+                    for i in range(int(sent[5])):
+                        yield Sent
 
-def TrainWord2VecModel(filename, min_count=5, workers=16):
-  def ParseCorpus(filename):
-    for line in open(filename):
-      yield line.split()
-  
-  vocab = set()
-  for line in ParseCorpus(filename):
-    for word in line:
-      vocab.add(word)
-  model = gensim.models.Word2Vec(ParseCorpus(filename), min_count=min_count, workers=workers)
-  return model, vocab
+def ParseCorpus(filename):
+    for line in open(filename):     
+        # tagged case
+        line_split = line.split()
+        if all([len(line_split)==8, line.count('_') == 5, line.count('_.')==0]):
+            #print line            
+            [words,pos]= zip(*[w.split('_') for w in line_split[0:5]])
+            if all([len(pos)==5, all([p.isupper() for p in pos])]):
+                sent = list(words) + [line_split[6]]
+          
+        # non-tagged case
+        elif all([len(line_split)==8, line.count('_') == 0]):
+            sent = line_split[0:5] + [line_split[6]]
+                
+        # Preprocessing: no numbers, special characters etc.
+        if 'sent' in locals() or 'sent' in globals():
+            if all([w.isalpha() for w in sent[0:5]]):
+                Sent = [w.lower() for w in sent[0:5]]
+                for i in range(int(sent[5])):
+                    yield Sent
+
+#def ParseCorpora(filenames):    
+#    if isinstance (filenames,list):
+#        for filename in filenames:
+#            yield ParseCorpus(filename)
+#        else:
+#            yield ParseCorpus(filename)
+            
 
 
 def main():
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     #if os.path.isfile(args.model):
     #    model = gensim.models.Word2Vec.load(args.model)
-    model, vocab = TrainWord2VecModel(args.corpus, min_count=1, workers=16)
-    model.save(args.output_model)
-    output_vectors = open(args.output_vectors, "w")
-    for word in vocab:
-      output_vectors.write("{}\t{}\n".format(word, str(model[word])))
+    
+    if args.start > args.end:
+        years = range(int(args.start), int(args.end),-1)
+    else:
+        years = range(int(args.start), int(args.end))
+    print years
+    model = gensim.models.Word2Vec(min_count=10, workers=16)
+    filenames = [args.corpus + str(y) + '.txt' for y in years]
+    model.build_vocab(ParseCorpora(filenames))
+
+    for idx,y in enumerate(years):
+        model.train(ParseCorpus(filenames[idx]))
+        model.save(args.output_model + str(y))
+                
+    
+      #output_vectors.write("{}\t{}\n".format(word, str(model[word])))
 
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
