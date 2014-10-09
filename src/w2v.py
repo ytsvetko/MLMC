@@ -19,6 +19,7 @@ args = parser.parse_args()
 
 def ParseCorpora(filenames):
     for filename in filenames:    
+        print '\n\n\n' + filename + '\n\n\n'        
         for line in open(filename):     
             # tagged case
             line_split = line.split()
@@ -47,10 +48,11 @@ def ParseCorpus(filename):
         line_split = line.split()
         if all([len(line_split)==8, line.count('_') == 5, line.count('_.')==0]):
             #print line            
-            [words,pos]= zip(*[w.split('_') for w in line_split[0:5]])
-            if all([len(pos)==5, all([p.isupper() for p in pos])]):
-                sent = list(words) + [line_split[6]]
-          
+            comp_line = [w.split('_') for w in line_split[0:5]]
+            if all([len(c)==2 for c in comp_line]):
+                [words,pos]= zip(*comp_line)
+                if all([len(pos)==5, all([p.isupper() for p in pos])]):
+                    sent = list(words) + [line_split[6]]          
         # non-tagged case
         elif all([len(line_split)==8, line.count('_') == 0]):
             sent = line_split[0:5] + [line_split[6]]
@@ -81,10 +83,11 @@ def main():
     else:
         years = range(int(args.start), int(args.end))
     print years
-    model = gensim.models.Word2Vec(min_count=10, workers=16)
+    model = gensim.models.Word2Vec(min_count=10, workers=32)
     filenames = [args.corpus + str(y) + '.txt' for y in years]
     model.build_vocab(ParseCorpora(filenames))
-
+    model.save(args.output_model + 'Fresh')
+    
     for idx,y in enumerate(years):
         model.train(ParseCorpus(filenames[idx]))
         model.save(args.output_model + str(y))
